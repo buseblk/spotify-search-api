@@ -1,0 +1,37 @@
+
+from flask import Flask, request, jsonify
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
+
+app = Flask(__name__)
+
+# Spotify API bilgilerin
+CLIENT_ID = "7474997aebb540659866fb963549297a"
+CLIENT_SECRET = "8460a963e05443ba9cbc6b74fbfa1064"
+auth_manager = SpotifyClientCredentials(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
+sp = spotipy.Spotify(auth_manager=auth_manager)
+
+@app.route("/search")
+def search():
+    kelime = request.args.get("q", "")
+    limit = 50
+    offset = 0
+    songs = []
+
+    while offset < 1000:
+        results = sp.search(q=kelime, type="track", limit=limit, offset=offset)
+        tracks = results["tracks"]["items"]
+        if not tracks:
+            break
+        for t in tracks:
+            songs.append({
+                "name": t["name"],
+                "artist": t["artists"][0]["name"],
+                "link": t["external_urls"]["spotify"]
+            })
+        offset += limit
+
+    return jsonify(songs)
+
+if __name__ == "__main__":
+    app.run(debug=True)
